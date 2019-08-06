@@ -1,6 +1,6 @@
 import math
 import glob
-import os
+import os,sys
 
 def getAlphabet():
     alphabet = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -101,37 +101,42 @@ def writeTMPpdb(pdbin,caList,type,newChain):
     f.close()
 
 
+def cleanup(symROOT):
+    os.system('/bin/rm tmp_'+symROOT+'*.pdb')
+    os.system('/bin/rm out_tmp_'+symROOT+'*.pdb')
+
 
 if __name__ == '__main__':
     alpha = getAlphabet()
 
-    ref = 'refmac9_protein_only.pdb'
+    ref = sys.argv[1]
+    symROOT = sys.argv[2]
+    cutoff = int(sys.argv[3])
+
     refCAdict = getDict(ref,'CA')
     refList = []
     symList = []
-    nSym = len(glob.glob('symm_equivalents_*.pdb'))
-#    for n,symfile in enumerate(sorted(glob.glob('symm_equivalents_*.pdb'))):
-#        print 'reading ',n+1,' of ',nSym,' PDB files'
-#        pdbname = symfile.replace('.pdb','')
-#        symTMPdict = getDict(symfile,'CA')
-#        refList,symList = compareDict(refCAdict,symTMPdict,refList,symList,pdbname,10)
-#        writeTMPpdb(symfile,symList,'sym',alpha[n])
-#    writeTMPpdb(ref,refList,'ref',alpha)
+    nSym = len(glob.glob(symROOT+'*.pdb'))
+    for n,symfile in enumerate(sorted(glob.glob(symROOT+'*.pdb'))):
+        print 'reading ',n+1,' of ',nSym,' PDB files'
+        pdbname = symfile.replace('.pdb','')
+        symTMPdict = getDict(symfile,'CA')
+        refList,symList = compareDict(refCAdict,symTMPdict,refList,symList,pdbname,cutoff+5)
+        writeTMPpdb(symfile,symList,'sym',alpha[n])
+    writeTMPpdb(ref,refList,'ref',alpha)
     refALLdict = getDict('tmp_'+ref,'all')
-    for n,symfile in enumerate(sorted(glob.glob('tmp_symm_equivalents_*.pdb'))):
+    for n,symfile in enumerate(sorted(glob.glob('tmp_'+symROOT+'*.pdb'))):
         print 'reading ',n+1,' of ',nSym,' PDB files'
         pdbname = symfile.replace('.pdb','')
         symTMPdict = getDict(symfile,'all')
-        refList,symList = compareDict(refALLdict,symTMPdict,refList,symList,pdbname,8)
+        refList,symList = compareDict(refALLdict,symTMPdict,refList,symList,pdbname,cutoff)
         writeTMPpdb(symfile,symList,'other',alpha[n])
     out = ''
-    for n,symfile in enumerate(sorted(glob.glob('out_tmp_symm_equivalents_*.pdb'))):
+    for n,symfile in enumerate(sorted(glob.glob('out_tmp_'+symROOT+'*.pdb'))):
         for line in open(symfile):
             out +=line
     f = open('symAtoms.pdb','w')
     f.write(out)
     f.close()
 
-    os.system('/bin/rm -f tmp_symm_equivalents_*.pdb')
-    os.system('/bin/rm -f out_tmp_symm_equivalents_*.pdb')
-
+    cleanup(symROOT)
