@@ -1,6 +1,6 @@
 # symSphere
 
-python symSphere.py <structure>.pdb <root_of_symmetry_equivalents> <distance>
+python symSphere.py structure.pdb root_of_symmetry_equivalents distance
 
 e.g.
 
